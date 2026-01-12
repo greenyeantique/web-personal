@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Mini Depot POS</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+
+body{
+    height:100vh;
+    background:url('back.jpg') center/cover no-repeat;
+}
+
+.blur-bg{
+    position:fixed;
+    inset:0;
+    backdrop-filter:blur(10px);
+    z-index:-1;
+}
+
+.center{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.container{
+    width:380px;
+    background:rgba(255,255,255,0.9);
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 8px 25px rgba(0,0,0,.3);
+    animation:fade .5s;
+    position:relative;
+}
+
+@keyframes fade{
+    from{opacity:0;transform:translateY(20px)}
+    to{opacity:1}
+}
+
+input,select{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.btn-login{background:#007bff;color:#fff}
+.btn-cetak{background:#007bff;color:#fff}
+.btn-input{background:#28a745;color:#fff}
+.btn-download{background:#1e7e34;color:#fff}
+
+.logout{
+    position:absolute;
+    top:10px;
+    right:10px;
+    width:42px;
+    height:42px;
+    background:#fff;
+    color:red;
+    font-size:22px;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    cursor:pointer;
+}
+
+.error{color:red;margin-top:10px;text-align:center}
+
+#struk{
+    display:none;
+    margin-top:15px;
+    padding:10px;
+    border:1px dashed #333;
+    white-space:pre-line;
+}
+</style>
+</head>
+
+<body>
+<div class="blur-bg"></div>
+
+<!-- LOGIN -->
+<div class="center" id="loginBox">
+    <div class="container">
+        <h3>Login App POS</h3>
+        <input id="username" placeholder="Username">
+        <input id="password" type="password" placeholder="Password">
+        <button class="btn-login" onclick="login()">Login</button>
+        <div class="error" id="loginMsg"></div>
+    </div>
+</div>
+
+<!-- DEPOT -->
+<div class="center" id="depotBox" style="display:none;">
+<div class="container">
+<div class="logout" onclick="logout()">🚪</div>
+
+<h3>Depot Mini POS</h3>
+
+<select id="menu" onchange="hitungTotal()">
+    <option value="25000">Paket A (Rp25.000)</option>
+    <option value="30000">Paket B (Rp30.000)</option>
+    <option value="40000">Paket C (Rp40.000)</option>
+</select>
+
+<input type="number" id="jumlah" value="1" min="1" oninput="hitungTotal()">
+
+<p id="hargaText">Harga Barang: Rp25.000</p>
+
+<input type="number" id="bayar" placeholder="Bayar" oninput="hitungKembalian()">
+
+<p id="kembalianText"></p>
+
+<button class="btn-cetak" onclick="cetakStruk()">Cetak Struk</button>
+<button class="btn-input" onclick="resetForm()">Input Lagi</button>
+<button class="btn-download" id="downloadBtn" onclick="downloadStruk()" style="display:none">
+Download Struk
+</button>
+
+<div id="struk"></div>
+</div>
+</div>
+
+<script>
+function rupiah(n){
+    return "Rp " + n.toLocaleString("id-ID");
+}
+
+/* LOGIN */
+function login(){
+    const user = document.getElementById("username").value;
+    const pw = document.getElementById("password").value;
+    const msg = document.getElementById("loginMsg");
+
+    if(user === "admin" && pw === "12345"){
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("depotBox").style.display="flex";
+    }else{
+        msg.innerText = "Username atau Password salah!";
+    }
+}
+
+function logout(){
+    location.reload();
+}
+
+/* HITUNG */
+function hitungTotal(){
+    const harga = menu.value * jumlah.value;
+    hargaText.innerText = "Harga Barang: " + rupiah(harga);
+    hitungKembalian();
+}
+
+function hitungKembalian(){
+    const total = menu.value * jumlah.value;
+    const byr = bayar.value || 0;
+
+    if(byr >= total){
+        kembalianText.innerText = "Kembalian: " + rupiah(byr - total);
+    }else{
+        kembalianText.innerText = "Uang belum cukup";
+    }
+}
+
+/* STRUK */
+function cetakStruk(){
+    const total = menu.value * jumlah.value;
+    const byr = bayar.value;
+
+    if(byr < total){
+        alert("Uang tidak cukup!");
+        return;
+    }
+
+    struk.style.display="block";
+    downloadBtn.style.display="block";
+
+    struk.innerText =
+`=== STRUK DEPOT MINI ===
+Menu      : ${menu.options[menu.selectedIndex].text}
+Jumlah    : ${jumlah.value}
+Total     : ${rupiah(total)}
+Bayar     : ${rupiah(byr)}
+Kembalian : ${rupiah(byr - total)}
+-----------------------
+Terima Kasih`;
+}
+
+function resetForm(){
+    jumlah.value=1;
+    bayar.value="";
+    kembalianText.innerText="";
+    struk.style.display="none";
+    downloadBtn.style.display="none";
+    hitungTotal();
+}
+
+function downloadStruk(){
+    const blob = new Blob([struk.innerText],{type:"text/plain"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "struk_depot.txt";
+    a.click();
+}
+
+hitungTotal();
+</script>
+
+</body>
+</html>
